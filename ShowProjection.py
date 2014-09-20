@@ -4,7 +4,11 @@ Put your camera info text files into 'camera_info/' folder.
 """
 import cv2
 import numpy as np
-import math
+
+sheet_A5 = np.array([[0., 0., 0.],
+                    [0.1485, 0., 0.],
+                    [0.1485, 0.21, 0.],
+                    [0., 0.21, 0.]], np.float32)
 
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -116,21 +120,17 @@ def plot_projected_img(src_img, background_img, src_crds, output_crds):
 def main():
     cv2.namedWindow("preview")
     vc = cv2.VideoCapture(0)
+    drawing = cv2.imread('test.png')
 
-    sheet_A5 = np.array([[0., 0., 0.],
-                        [0.1485, 0., 0.],
-                        [0.1485, 0.21, 0.],
-                        [0., 0.21, 0.]], np.float32)
 
-    pxl_sheet_A5 = np.array([[0, 0],
-                            [400, 0],
-                            [400, 473],
-                            [0., 473]], np.float32)
+    pxl_sheet_size = np.array([[0, 0],
+                            [drawing.shape[1], 0],
+                            [drawing.shape[1], drawing.shape[0]],
+                            [0., drawing.shape[0]]], np.float32)
 
     cam_intr_mtx = np.loadtxt('camera_info/mtx.dat')
     cam_dist = np.loadtxt('camera_info/dist.dat')
 
-    drawing = cv2.imread('test.png')
 
     if vc.isOpened():  # try to get the first frame
         rval, frame = vc.read()
@@ -143,11 +143,11 @@ def main():
 
         # is_detected = False
         if is_detected:
-            projected_drawing = plot_projected_img(drawing, frame, pxl_sheet_A5, edges)
+            projected_drawing = plot_projected_img(drawing, frame, pxl_sheet_size, edges)
             # cv2.imshow("preview", edges)
-            rvec, cmr_position = cv2.solvePnP(sheet_A5, edges, cam_intr_mtx, cam_dist)
+            rvec, cmr_rvec, cmr_tvec = cv2.solvePnP(sheet_A5, edges, cam_intr_mtx, cam_dist)
             cv2.putText(projected_drawing,
-                        'x:%.3fm|y:%.3fm|z:%.3fm' % (cmr_position[0], cmr_position[1], cmr_position[2]),
+                        'x:%.3fm|y:%.3fm|z:%.3fm' % (cmr_tvec[0], cmr_tvec[1], cmr_tvec[2]),
                         (0, 20),
                         cv2.FONT_HERSHEY_PLAIN,
                         1,

@@ -2,6 +2,7 @@
     Before using:
     Define the path to the folder where camera info information is stored
     with camera_info_dir variable.
+    To change the drawing image look to main() function.
 """
 import cv2
 import numpy as np
